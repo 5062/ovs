@@ -1624,6 +1624,34 @@ enum OVS_PACKED_ENUM mf_field_id {
      */
     MFF_TCP_DST,
 
+    /* "tcp_seq".
+     *
+     * TCP sequence number.
+     *
+     * Type: be32.
+     * Maskable: bitwise.
+     * Formatting: decimal.
+     * Prerequisites: TCP.
+     * Access: read/write.
+     * NXM: NXM_OF_TCP_SEQ(800) since v2.1.
+     * OXM: OXM_OF_TCP_SEQ(900) since OF1.3 and v2.17.
+     */
+    MFF_TCP_SEQ,
+
+    /* "tcp_ack".
+     *
+     * TCP acknowledgement number.
+     *
+     * Type: be32.
+     * Maskable: bitwise.
+     * Formatting: decimal.
+     * Prerequisites: TCP.
+     * Access: read/write.
+     * NXM: NXM_OF_TCP_SEQ(801) since v2.1.
+     * OXM: OXM_OF_TCP_ACK(901) since OF1.3 and v2.17.
+     */
+    MFF_TCP_ACK,
+
     /* "tcp_flags".
      *
      * Flags in the TCP header.

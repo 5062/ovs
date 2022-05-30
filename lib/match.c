@@ -908,6 +908,32 @@ match_set_tp_dst_masked(struct match *match, ovs_be16 port, ovs_be16 mask)
 }
 
 void
+match_set_tcp_seq(struct match *match, ovs_be32 tcp_seq)
+{
+    match_set_tcp_seq_masked(match, tcp_seq, OVS_BE32_MAX);
+}
+
+void
+match_set_tcp_seq_masked(struct match *match, ovs_be32 tcp_seq, ovs_be32 mask)
+{
+    match->flow.tcp_seq = tcp_seq & mask;
+    match->wc.masks.tcp_seq = mask;
+}
+
+void
+match_set_tcp_ack(struct match *match, ovs_be32 tcp_ack)
+{
+    match_set_tcp_ack_masked(match, tcp_ack, OVS_BE32_MAX);
+}
+
+void
+match_set_tcp_ack_masked(struct match *match, ovs_be32 tcp_ack, ovs_be32 mask)
+{
+    match->flow.tcp_ack = tcp_ack & mask;
+    match->wc.masks.tcp_ack = mask;
+}
+
+void
 match_set_tcp_flags(struct match *match, ovs_be16 flags)
 {
     match_set_tcp_flags_masked(match, flags, OVS_BE16_MAX);
@@ -1778,6 +1804,8 @@ match_format(const struct match *match,
     } else {
         format_be16_masked(s, "tp_src", f->tp_src, wc->masks.tp_src);
         format_be16_masked(s, "tp_dst", f->tp_dst, wc->masks.tp_dst);
+        format_be32_masked(s, "tcp_seq", f->tcp_seq, wc->masks.tcp_seq);
+        format_be32_masked(s, "tcp_ack", f->tcp_ack, wc->masks.tcp_ack);
     }
     if (is_ip_any(f) && f->nw_proto == IPPROTO_TCP && wc->masks.tcp_flags) {
         format_flags_masked(s, "tcp_flags", packet_tcp_flag_to_string,

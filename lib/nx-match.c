@@ -1164,6 +1164,14 @@ nx_put_raw(struct ofpbuf *b, enum ofp_version oxm, const struct match *match,
                            flow->arp_tha, match->wc.masks.arp_tha);
     }
 
+    /* TCP. */
+    if (match->wc.masks.tcp_seq) {
+        nxm_put_32m(&ctx, MFF_TCP_SEQ, oxm, flow->tcp_seq, match->wc.masks.tcp_seq);
+    }
+    if (match->wc.masks.tcp_ack) {
+        nxm_put_32m(&ctx, MFF_TCP_ACK, oxm, flow->tcp_ack, match->wc.masks.tcp_ack);
+    }
+
     /* Tunnel ID. */
     nxm_put_64m(&ctx, MFF_TUN_ID, oxm,
                 flow->tunnel.tun_id, match->wc.masks.tunnel.tun_id);

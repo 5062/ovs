@@ -1015,6 +1015,8 @@ miniflow_extract(struct dp_packet *packet, struct miniflow *dst)
                                        TCP_FLAGS_BE32(tcp->tcp_ctl));
                     miniflow_push_be16(mf, tp_src, tcp->tcp_src);
                     miniflow_push_be16(mf, tp_dst, tcp->tcp_dst);
+                    miniflow_push_be32(mf, tcp_seq, get_16aligned_be32(&tcp->tcp_seq));
+                    miniflow_push_be32(mf, tcp_ack, get_16aligned_be32(&tcp->tcp_ack));
                     miniflow_push_be16(mf, ct_tp_src, ct_tp_src);
                     miniflow_push_be16(mf, ct_tp_dst, ct_tp_dst);
                     if (dl_type == htons(ETH_TYPE_IP)) {
