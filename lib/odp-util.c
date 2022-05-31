@@ -3572,6 +3572,23 @@ format_be16x(struct ds *ds, const char *name, ovs_be16 key,
 }
 
 static void
+format_be32(struct ds *ds, const char *name, ovs_be32 key,
+            const ovs_be32 *mask, bool verbose)
+{
+    bool mask_empty = mask && !*mask;
+
+    if (verbose || !mask_empty) {
+        bool mask_full = !mask || *mask == OVS_BE32_MAX;
+
+        ds_put_format(ds, "%s=%"PRIu32, name, ntohl(key));
+        if (!mask_full) { /* Partially masked. */
+            ds_put_format(ds, "/%#"PRIx32, ntohl(*mask));
+        }
+        ds_put_char(ds, ',');
+    }
+}
+
+static void
 format_tun_flags(struct ds *ds, const char *name, uint16_t key,
                  const uint16_t *mask, bool verbose)
 {
@@ -4335,6 +4352,8 @@ format_odp_key_attr__(const struct nlattr *a, const struct nlattr *ma,
 
         format_be16(ds, "src", key->tcp_src, MASK(mask, tcp_src), verbose);
         format_be16(ds, "dst", key->tcp_dst, MASK(mask, tcp_dst), verbose);
+        format_be32(ds, "seq", key->tcp_seq, MASK(mask, tcp_seq), verbose);
+        format_be32(ds, "ack", key->tcp_ack, MASK(mask, tcp_ack), verbose);
         ds_chomp(ds, ',');
         break;
     }
@@ -8486,6 +8505,8 @@ get_tp_key(const struct flow *flow, union ovs_key_tp *tp)
 {
     tp->tcp.tcp_src = flow->tp_src;
     tp->tcp.tcp_dst = flow->tp_dst;
+    tp->tcp.tcp_seq = flow->tcp_seq;
+    tp->tcp.tcp_ack = flow->tcp_ack;
 }
 
 static void

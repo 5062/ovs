@@ -503,6 +503,8 @@ struct ovs_key_ipv6 {
 struct ovs_key_tcp {
 	__be16 tcp_src;
 	__be16 tcp_dst;
+    __be32 tcp_seq;
+    __be32 tcp_ack;
 };
 
 struct ovs_key_udp {
