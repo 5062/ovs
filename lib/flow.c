@@ -2037,6 +2037,8 @@ flow_wc_map(const struct flow *flow, struct flowmap *map)
         FLOWMAP_SET(map, nw_ttl);
         FLOWMAP_SET(map, tp_src);
         FLOWMAP_SET(map, tp_dst);
+        FLOWMAP_SET(map, tcp_seq);
+        FLOWMAP_SET(map, tcp_ack);
         FLOWMAP_SET(map, ct_nw_proto);
         FLOWMAP_SET(map, ct_nw_src);
         FLOWMAP_SET(map, ct_nw_dst);
