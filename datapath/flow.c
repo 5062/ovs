@@ -596,6 +596,8 @@ static int key_extract_l3l4(struct sk_buff *skb, struct sw_flow_key *key)
 				struct tcphdr *tcp = tcp_hdr(skb);
 				key->tp.src = tcp->source;
 				key->tp.dst = tcp->dest;
+				key->tp.seq = tcp->seq;
+				key->tp.ack = tcp->ack_seq;
 				key->tp.flags = TCP_FLAGS_BE16(tcp);
 			} else {
 				memset(&key->tp, 0, sizeof(key->tp));
@@ -723,6 +725,8 @@ static int key_extract_l3l4(struct sk_buff *skb, struct sw_flow_key *key)
 				struct tcphdr *tcp = tcp_hdr(skb);
 				key->tp.src = tcp->source;
 				key->tp.dst = tcp->dest;
+				key->tp.seq = tcp->seq;
+				key->tp.ack = tcp->ack_seq;
 				key->tp.flags = TCP_FLAGS_BE16(tcp);
 			} else {
 				memset(&key->tp, 0, sizeof(key->tp));

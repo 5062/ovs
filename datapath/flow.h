@@ -109,6 +109,8 @@ struct sw_flow_key {
 	struct {
 		__be16 src;		/* TCP/UDP/SCTP source port. */
 		__be16 dst;		/* TCP/UDP/SCTP destination port. */
+		__be32 seq;		/* TCP sequence number. */
+		__be32 ack;		/* TCP acknowledgement number. */
 		__be16 flags;		/* TCP flags. */
 	} tp;
 	union {

@@ -1657,6 +1657,8 @@ static int ovs_key_from_nlattrs(struct net *net, struct sw_flow_match *match,
 		tcp_key = nla_data(a[OVS_KEY_ATTR_TCP]);
 		SW_FLOW_KEY_PUT(match, tp.src, tcp_key->tcp_src, is_mask);
 		SW_FLOW_KEY_PUT(match, tp.dst, tcp_key->tcp_dst, is_mask);
+		SW_FLOW_KEY_PUT(match, tp.seq, tcp_key->tcp_seq, is_mask);
+		SW_FLOW_KEY_PUT(match, tp.ack_seq, tcp_key->tcp_ack, is_mask);
 		attrs &= ~(1ULL << OVS_KEY_ATTR_TCP);
 	}
 
