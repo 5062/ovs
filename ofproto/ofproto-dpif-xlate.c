@@ -5255,6 +5255,40 @@ compose_dec_mpls_ttl_action(struct xlate_ctx *ctx)
 }
 
 static void
+xlate_inc_tcp_seq_action(struct xlate_ctx *ctx, uint32_t seq_delta)
+{
+    if (!is_ip_any(&ctx->xin->flow)) {
+        return;
+    }
+    ctx->xout->slow |= SLOW_ACTION;
+    if (ctx->xin->packet) {
+        const struct dp_packet *packet = ctx->xin->packet;
+        struct tcp_header *th = dp_packet_l4(packet);
+        ovs_be32 seq = get_16aligned_be32(&th->tcp_seq);
+        ovs_be32 new_seq = htonl(ntohl(seq) + seq_delta);
+        th->tcp_csum = recalc_csum32(th->tcp_csum, seq, new_seq);
+        put_16aligned_be32(&th->tcp_seq, new_seq);
+    }
+}
+
+static void
+xlate_inc_tcp_ack_action(struct xlate_ctx *ctx, uint32_t ack_delta)
+{
+    if (!is_ip_any(&ctx->xin->flow)) {
+        return;
+    }
+    ctx->xout->slow |= SLOW_ACTION;
+    if (ctx->xin->packet) {
+        const struct dp_packet *packet = ctx->xin->packet;
+        struct tcp_header *th = dp_packet_l4(packet);
+        ovs_be32 ack = get_16aligned_be32(&th->tcp_ack);
+        ovs_be32 new_ack = htonl(ntohl(ack) + ack_delta);
+        th->tcp_csum = recalc_csum32(th->tcp_csum, ack, new_ack);
+        put_16aligned_be32(&th->tcp_ack, new_ack);
+    }
+}
+
+static void
 xlate_delete_field(struct xlate_ctx *ctx,
                    struct flow *flow,
                    const struct ofpact_delete_field *odf)
@@ -5781,6 +5815,10 @@ reversible_actions(const struct ofpact *ofpacts, size_t ofpacts_len)
         case OFPACT_SET_IPV4_SRC:
         case OFPACT_SET_L4_DST_PORT:
         case OFPACT_SET_L4_SRC_PORT:
+        case OFPACT_INC_TCP_SEQ:
+        case OFPACT_DEC_TCP_SEQ:
+        case OFPACT_INC_TCP_ACK:
+        case OFPACT_DEC_TCP_ACK:
         case OFPACT_SET_MPLS_LABEL:
         case OFPACT_SET_MPLS_TC:
         case OFPACT_SET_MPLS_TTL:
@@ -6102,6 +6140,10 @@ freeze_unroll_actions(const struct ofpact *a, const struct ofpact *end,
         case OFPACT_SET_IP_TTL:
         case OFPACT_SET_L4_SRC_PORT:
         case OFPACT_SET_L4_DST_PORT:
+        case OFPACT_INC_TCP_SEQ:
+        case OFPACT_DEC_TCP_SEQ:
+        case OFPACT_INC_TCP_ACK:
+        case OFPACT_DEC_TCP_ACK:
         case OFPACT_SET_QUEUE:
         case OFPACT_POP_QUEUE:
         case OFPACT_PUSH_MPLS:
@@ -6859,6 +6901,10 @@ recirc_for_mpls(const struct ofpact *a, struct xlate_ctx *ctx)
     case OFPACT_SET_IP_TTL:
     case OFPACT_SET_L4_SRC_PORT:
     case OFPACT_SET_L4_DST_PORT:
+    case OFPACT_INC_TCP_SEQ:
+    case OFPACT_DEC_TCP_SEQ:
+    case OFPACT_INC_TCP_ACK:
+    case OFPACT_DEC_TCP_ACK:
     case OFPACT_REG_MOVE:
     case OFPACT_STACK_PUSH:
     case OFPACT_STACK_POP:
@@ -7119,6 +7165,22 @@ do_xlate_actions(const struct ofpact *ofpacts, size_t ofpacts_len,
                 memset(&wc->masks.tp_dst, 0xff, sizeof wc->masks.tp_dst);
                 flow->tp_dst = htons(ofpact_get_SET_L4_DST_PORT(a)->port);
             }
+            break;
+
+        case OFPACT_INC_TCP_SEQ:
+            xlate_inc_tcp_seq_action(ctx, ofpact_get_INC_TCP_SEQ(a)->delta);
+            break;
+
+        case OFPACT_DEC_TCP_SEQ:
+            xlate_inc_tcp_seq_action(ctx, -ofpact_get_DEC_TCP_SEQ(a)->delta);
+            break;
+
+        case OFPACT_INC_TCP_ACK:
+            xlate_inc_tcp_ack_action(ctx, ofpact_get_INC_TCP_ACK(a)->delta);
+            break;
+
+        case OFPACT_DEC_TCP_ACK:
+            xlate_inc_tcp_ack_action(ctx, -ofpact_get_DEC_TCP_ACK(a)->delta);
             break;
 
         /* Freezing complicates resubmit and goto_table.  Some action in the

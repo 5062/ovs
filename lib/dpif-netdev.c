@@ -9059,6 +9059,10 @@ dp_execute_cb(void *aux_, struct dp_packet_batch *packets_,
     case OVS_ACTION_ATTR_POP_NSH:
     case OVS_ACTION_ATTR_CT_CLEAR:
     case OVS_ACTION_ATTR_CHECK_PKT_LEN:
+    case OVS_ACTION_ATTR_INC_TCP_SEQ:
+    case OVS_ACTION_ATTR_DEC_TCP_SEQ:
+    case OVS_ACTION_ATTR_INC_TCP_ACK:
+    case OVS_ACTION_ATTR_DEC_TCP_ACK:
     case OVS_ACTION_ATTR_DROP:
     case OVS_ACTION_ATTR_ADD_MPLS:
     case __OVS_ACTION_ATTR_MAX:

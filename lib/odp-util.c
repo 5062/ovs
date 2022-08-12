@@ -143,6 +143,10 @@ odp_action_len(uint16_t type)
     case OVS_ACTION_ATTR_POP_NSH: return 0;
     case OVS_ACTION_ATTR_CHECK_PKT_LEN: return ATTR_LEN_VARIABLE;
     case OVS_ACTION_ATTR_ADD_MPLS: return sizeof(struct ovs_action_add_mpls);
+    case OVS_ACTION_ATTR_INC_TCP_SEQ: return sizeof(uint32_t);
+    case OVS_ACTION_ATTR_DEC_TCP_SEQ: return sizeof(uint32_t);
+    case OVS_ACTION_ATTR_INC_TCP_ACK: return sizeof(uint32_t);
+    case OVS_ACTION_ATTR_DEC_TCP_ACK: return sizeof(uint32_t);
     case OVS_ACTION_ATTR_DROP: return sizeof(uint32_t);
 
     case OVS_ACTION_ATTR_UNSPEC:
@@ -1263,6 +1267,26 @@ format_odp_action(struct ds *ds, const struct nlattr *a,
         format_mpls_lse(ds, mpls->mpls_lse);
         ds_put_format(ds, ",eth_type=0x%"PRIx16")",
                       ntohs(mpls->mpls_ethertype));
+        break;
+    }
+    case OVS_ACTION_ATTR_INC_TCP_SEQ: {
+        uint32_t seq_delta = nl_attr_get_u32(a);
+        ds_put_format(ds, "inc_tcp_seq(%"PRIu32")", seq_delta);
+        break;
+    }
+    case OVS_ACTION_ATTR_DEC_TCP_SEQ: {
+        uint32_t seq_delta = nl_attr_get_u32(a);
+        ds_put_format(ds, "dec_tcp_seq(%"PRIu32")", seq_delta);
+        break;
+    }
+    case OVS_ACTION_ATTR_INC_TCP_ACK: {
+        uint32_t ack_delta = nl_attr_get_u32(a);
+        ds_put_format(ds, "inc_tcp_ack(%"PRIu32")", ack_delta);
+        break;
+    }
+    case OVS_ACTION_ATTR_DEC_TCP_ACK: {
+        uint32_t ack_delta = nl_attr_get_u32(a);
+        ds_put_format(ds, "dec_tcp_ack(%"PRIu32")", ack_delta);
         break;
     }
     case OVS_ACTION_ATTR_DROP:
@@ -2622,6 +2646,46 @@ parse_odp_action__(struct parse_odp_context *context, const char *s,
             mpls.tun_flags = 0;
             nl_msg_put_unspec(actions, OVS_ACTION_ATTR_ADD_MPLS,
                               &mpls, sizeof mpls);
+            return n;
+        }
+    }
+
+    {
+        uint32_t seq_delta;
+        int n;
+
+        if (ovs_scan(s, "inc_tcp_seq(%"SCNu32")%n", &seq_delta, &n)) {
+            nl_msg_put_u32(actions, OVS_ACTION_ATTR_INC_TCP_SEQ, seq_delta);
+            return n;
+        }
+    }
+
+    {
+        uint32_t seq_delta;
+        int n;
+
+        if (ovs_scan(s, "dec_tcp_seq(%"SCNu32")%n", &seq_delta, &n)) {
+            nl_msg_put_u32(actions, OVS_ACTION_ATTR_DEC_TCP_SEQ, seq_delta);
+            return n;
+        }
+    }
+
+    {
+        uint32_t ack_delta;
+        int n;
+
+        if (ovs_scan(s, "inc_tcp_ack(%"SCNu32")%n", &ack_delta, &n)) {
+            nl_msg_put_u32(actions, OVS_ACTION_ATTR_INC_TCP_ACK, ack_delta);
+            return n;
+        }
+    }
+
+    {
+        uint32_t ack_delta;
+        int n;
+
+        if (ovs_scan(s, "dec_tcp_ack(%"SCNu32")%n", &ack_delta, &n)) {
+            nl_msg_put_u32(actions, OVS_ACTION_ATTR_DEC_TCP_ACK, ack_delta);
             return n;
         }
     }

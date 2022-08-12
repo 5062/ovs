@@ -15,6 +15,10 @@ Open vSwitch
 .. image:: https://api.cirrus-ci.com/github/openvswitch/ovs.svg
     :target: https://cirrus-ci.com/github/openvswitch/ovs
 
+Modified version of OVS with four custom actions: NXAST_INC_TCP_SEQ(80),
+NXAST_DEC_TCP_SEQ(81), NXAST_INC_TCP_ACK(82), and NXAST_DEC_TCP_ACK(83), and
+their implementation.
+
 What is Open vSwitch?
 ---------------------
 

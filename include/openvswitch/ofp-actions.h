@@ -83,6 +83,10 @@ struct vl_mff_map;
     OFPACT(SET_IP_TTL,      ofpact_ip_ttl,      ofpact, "mod_nw_ttl")   \
     OFPACT(SET_L4_SRC_PORT, ofpact_l4_port,     ofpact, "mod_tp_src")   \
     OFPACT(SET_L4_DST_PORT, ofpact_l4_port,     ofpact, "mod_tp_dst")   \
+    OFPACT(INC_TCP_SEQ,     ofpact_tcp_state,   ofpact, "inc_tcp_seq")  \
+    OFPACT(DEC_TCP_SEQ,     ofpact_tcp_state,   ofpact, "dec_tcp_seq")  \
+    OFPACT(INC_TCP_ACK,     ofpact_tcp_state,   ofpact, "inc_tcp_ack")  \
+    OFPACT(DEC_TCP_ACK,     ofpact_tcp_state,   ofpact, "dec_tcp_ack")  \
     OFPACT(REG_MOVE,        ofpact_reg_move,    ofpact, "move")         \
     OFPACT(STACK_PUSH,      ofpact_stack,       ofpact, "push")         \
     OFPACT(STACK_POP,       ofpact_stack,       ofpact, "pop")          \
@@ -516,6 +520,19 @@ struct ofpact_l4_port {
         struct ofpact ofpact;
         uint16_t port;          /* TCP, UDP or SCTP port number. */
         uint8_t  flow_ip_proto; /* IP proto from corresponding match, or 0 */
+    );
+};
+
+/* OFPACT_INC_TCP_SEQ, OFPACT_DEC_TCP_SEQ,
+ * OFPACT_INC_TCP_ACK, OFPACT_DEC_TCP_ACK.
+ *
+ * Used for NXAST_INC_TCP_SEQ, NXAST_DEC_TCP_SEQ,
+ * NXAST_INC_TCP_ACK, NXAST_DEC_TCP_ACK. */
+struct ofpact_tcp_state {
+    OFPACT_PADDED_MEMBERS(
+        struct ofpact ofpact;
+        uint32_t delta;         /* TCP sequence number or acknowledgement
+                                 * number difference. */
     );
 };
 

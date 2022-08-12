@@ -1041,6 +1041,10 @@ struct check_pkt_len_arg {
  * of l3 tunnel flag in the tun_flags field of OVS_ACTION_ATTR_ADD_MPLS
  * argument.
  * @OVS_ACTION_ATTR_DROP: Explicit drop action.
+ * @OVS_ACTION_ATTR_INC_TCP_SEQ: Increase TCP sequence number by a value.
+ * @OVS_ACTION_ATTR_DEC_TCP_SEQ: Decrease TCP sequence number by a value.
+ * @OVS_ACTION_ATTR_INC_TCP_ACK: Increase TCP acknowledgement number by a value.
+ * @OVS_ACTION_ATTR_DEC_TCP_ACK: Decrease TCP acknowledgement number by a value.
  */
 
 enum ovs_action_attr {
@@ -1077,6 +1081,12 @@ enum ovs_action_attr {
 	OVS_ACTION_ATTR_DROP,          /* u32 xlate_error. */
 	OVS_ACTION_ATTR_LB_OUTPUT,     /* u32 bond-id. */
 #endif
+	OVS_ACTION_ATTR_INC_TCP_SEQ = 80, /* u32 TCP sequence number increment. */
+	OVS_ACTION_ATTR_DEC_TCP_SEQ = 81, /* u32 TCP sequence number decrement. */
+	OVS_ACTION_ATTR_INC_TCP_ACK = 82, /* u32 TCP acknowledgement number
+					   * increment. */
+	OVS_ACTION_ATTR_DEC_TCP_ACK = 83, /* u32 TCP acknowledgement number
+					   * decrement. */
 	__OVS_ACTION_ATTR_MAX,	      /* Nothing past this will be accepted
 				       * from userspace. */
 

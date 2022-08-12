@@ -821,6 +821,10 @@ requires_datapath_assistance(const struct nlattr *a)
     case OVS_ACTION_ATTR_POP_NSH:
     case OVS_ACTION_ATTR_CT_CLEAR:
     case OVS_ACTION_ATTR_CHECK_PKT_LEN:
+    case OVS_ACTION_ATTR_INC_TCP_SEQ:
+    case OVS_ACTION_ATTR_DEC_TCP_SEQ:
+    case OVS_ACTION_ATTR_INC_TCP_ACK:
+    case OVS_ACTION_ATTR_DEC_TCP_ACK:
     case OVS_ACTION_ATTR_ADD_MPLS:
     case OVS_ACTION_ATTR_DROP:
         return false;
@@ -1083,6 +1087,31 @@ odp_execute_actions(void *dp, struct dp_packet_batch *batch, bool steal,
             dp_packet_delete_batch(batch, steal);
             return;
         }
+
+        case OVS_ACTION_ATTR_INC_TCP_SEQ:
+            DP_PACKET_BATCH_FOR_EACH (i, packet, batch) {
+                packet_inc_tcp_seq(packet, nl_attr_get_u32(a));
+            }
+            break;
+
+        case OVS_ACTION_ATTR_DEC_TCP_SEQ:
+            DP_PACKET_BATCH_FOR_EACH (i, packet, batch) {
+                packet_inc_tcp_seq(packet, -nl_attr_get_u32(a));
+            }
+            break;
+
+        case OVS_ACTION_ATTR_INC_TCP_ACK:
+            DP_PACKET_BATCH_FOR_EACH (i, packet, batch) {
+                packet_inc_tcp_ack(packet, nl_attr_get_u32(a));
+            }
+            break;
+
+        case OVS_ACTION_ATTR_DEC_TCP_ACK:
+            DP_PACKET_BATCH_FOR_EACH (i, packet, batch) {
+                packet_inc_tcp_ack(packet, -nl_attr_get_u32(a));
+            }
+            break;
+
         case OVS_ACTION_ATTR_OUTPUT:
         case OVS_ACTION_ATTR_LB_OUTPUT:
         case OVS_ACTION_ATTR_TUNNEL_PUSH:

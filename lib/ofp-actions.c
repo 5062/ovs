@@ -283,6 +283,18 @@ enum ofp_raw_action_type {
     /* NX1.0+(5): void. */
     NXAST_RAW_POP_QUEUE,
 
+    /* NX1.0+(80): uint32_t. */
+    NXAST_RAW_INC_TCP_SEQ,
+
+    /* NX1.0+(81): uint32_t. */
+    NXAST_RAW_DEC_TCP_SEQ,
+
+    /* NX1.0+(82): uint32_t. */
+    NXAST_RAW_INC_TCP_ACK,
+
+    /* NX1.0+(83): uint32_t. */
+    NXAST_RAW_DEC_TCP_ACK,
+
     /* NX1.0+(8): struct nx_action_note, ... */
     NXAST_RAW_NOTE,
 
@@ -470,6 +482,10 @@ ofpact_next_flattened(const struct ofpact *ofpact)
     case OFPACT_SET_IP_TTL:
     case OFPACT_SET_L4_SRC_PORT:
     case OFPACT_SET_L4_DST_PORT:
+    case OFPACT_INC_TCP_SEQ:
+    case OFPACT_DEC_TCP_SEQ:
+    case OFPACT_INC_TCP_ACK:
+    case OFPACT_DEC_TCP_ACK:
     case OFPACT_REG_MOVE:
     case OFPACT_STACK_PUSH:
     case OFPACT_STACK_POP:
@@ -5746,6 +5762,170 @@ check_CONJUNCTION(const struct ofpact_conjunction *a OVS_UNUSED,
     return 0;
 }
 
+static enum ofperr
+decode_NXAST_RAW_INC_TCP_SEQ(uint32_t seq_delta,
+                             enum ofp_version ofp_version OVS_UNUSED,
+                             struct ofpbuf *out)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_INC_TCP_SEQ(out);
+    ots->ofpact.raw = NXAST_RAW_INC_TCP_SEQ;
+    ots->delta = seq_delta;
+    return 0;
+}
+
+static enum ofperr
+decode_NXAST_RAW_DEC_TCP_SEQ(uint32_t seq_delta,
+                             enum ofp_version ofp_version OVS_UNUSED,
+                             struct ofpbuf *out)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_DEC_TCP_SEQ(out);
+    ots->ofpact.raw = NXAST_RAW_DEC_TCP_SEQ;
+    ots->delta = seq_delta;
+    return 0;
+}
+
+static enum ofperr
+decode_NXAST_RAW_INC_TCP_ACK(uint32_t ack_delta,
+                             enum ofp_version ofp_version OVS_UNUSED,
+                             struct ofpbuf *out)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_INC_TCP_ACK(out);
+    ots->ofpact.raw = NXAST_RAW_INC_TCP_ACK;
+    ots->delta = ack_delta;
+    return 0;
+}
+
+static enum ofperr
+decode_NXAST_RAW_DEC_TCP_ACK(uint32_t ack_delta,
+                             enum ofp_version ofp_version OVS_UNUSED,
+                             struct ofpbuf *out)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_DEC_TCP_ACK(out);
+    ots->ofpact.raw = NXAST_RAW_DEC_TCP_ACK;
+    ots->delta = ack_delta;
+    return 0;
+}
+
+static void
+encode_INC_TCP_SEQ(const struct ofpact_tcp_state *ots,
+                   enum ofp_version ofp_version OVS_UNUSED, struct ofpbuf *out)
+{
+    uint32_t seq_delta = ots->delta;
+    put_NXAST_INC_TCP_SEQ(out, seq_delta);
+}
+
+static void
+encode_DEC_TCP_SEQ(const struct ofpact_tcp_state *ots,
+                   enum ofp_version ofp_version OVS_UNUSED, struct ofpbuf *out)
+{
+    uint32_t seq_delta = ots->delta;
+    put_NXAST_DEC_TCP_SEQ(out, seq_delta);
+}
+
+static void
+encode_INC_TCP_ACK(const struct ofpact_tcp_state *ots,
+                   enum ofp_version ofp_version OVS_UNUSED, struct ofpbuf *out)
+{
+    uint32_t ack_delta = ots->delta;
+    put_NXAST_INC_TCP_ACK(out, ack_delta);
+}
+
+static void
+encode_DEC_TCP_ACK(const struct ofpact_tcp_state *ots,
+                   enum ofp_version ofp_version OVS_UNUSED, struct ofpbuf *out)
+{
+    uint32_t ack_delta = ots->delta;
+    put_NXAST_DEC_TCP_ACK(out, ack_delta);
+}
+
+static void
+format_INC_TCP_SEQ(const struct ofpact_tcp_state *ots,
+                   const struct ofpact_format_params *fp)
+{
+    ds_put_format(fp->s, "%sinc_tcp_seq:%s%"PRIu32,
+                  colors.param, colors.end, ots->delta);
+}
+
+static void
+format_DEC_TCP_SEQ(const struct ofpact_tcp_state *ots,
+                   const struct ofpact_format_params *fp)
+{
+    ds_put_format(fp->s, "%sdec_tcp_seq:%s%"PRIu32,
+                  colors.param, colors.end, ots->delta);
+}
+
+static void
+format_INC_TCP_ACK(const struct ofpact_tcp_state *ots,
+                   const struct ofpact_format_params *fp)
+{
+    ds_put_format(fp->s, "%sinc_tcp_ack:%s%"PRIu32,
+                  colors.param, colors.end, ots->delta);
+}
+
+static void
+format_DEC_TCP_ACK(const struct ofpact_tcp_state *ots,
+                   const struct ofpact_format_params *fp)
+{
+    ds_put_format(fp->s, "%sdec_tcp_ack:%s%"PRIu32,
+                  colors.param, colors.end, ots->delta);
+}
+
+static char * OVS_WARN_UNUSED_RESULT
+parse_INC_TCP_SEQ(const char *arg, const struct ofpact_parse_params *pp)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_INC_TCP_SEQ(pp->ofpacts);
+    return str_to_u32(arg, &ots->delta);
+}
+
+static char * OVS_WARN_UNUSED_RESULT
+parse_DEC_TCP_SEQ(const char *arg, const struct ofpact_parse_params *pp)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_DEC_TCP_SEQ(pp->ofpacts);
+    return str_to_u32(arg, &ots->delta);
+}
+
+static char * OVS_WARN_UNUSED_RESULT
+parse_INC_TCP_ACK(const char *arg, const struct ofpact_parse_params *pp)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_INC_TCP_ACK(pp->ofpacts);
+    return str_to_u32(arg, &ots->delta);
+}
+
+static char * OVS_WARN_UNUSED_RESULT
+parse_DEC_TCP_ACK(const char *arg, const struct ofpact_parse_params *pp)
+{
+    struct ofpact_tcp_state *ots = ofpact_put_DEC_TCP_ACK(pp->ofpacts);
+    return str_to_u32(arg, &ots->delta);
+}
+
+static enum ofperr
+check_INC_TCP_SEQ(const struct ofpact_tcp_state *ots OVS_UNUSED,
+                  const struct ofpact_check_params *cp OVS_UNUSED)
+{
+    return 0;
+}
+
+static enum ofperr
+check_DEC_TCP_SEQ(const struct ofpact_tcp_state *ots OVS_UNUSED,
+                  const struct ofpact_check_params *cp OVS_UNUSED)
+{
+    return 0;
+}
+
+static enum ofperr
+check_INC_TCP_ACK(const struct ofpact_tcp_state *ots OVS_UNUSED,
+                  const struct ofpact_check_params *cp OVS_UNUSED)
+{
+    return 0;
+}
+
+static enum ofperr
+check_DEC_TCP_ACK(const struct ofpact_tcp_state *ots OVS_UNUSED,
+                  const struct ofpact_check_params *cp OVS_UNUSED)
+{
+    return 0;
+}
+
 /* Action structure for NXAST_MULTIPATH.
  *
  * This action performs the following steps in sequence:
@@ -8016,6 +8196,10 @@ action_set_classify(const struct ofpact *a)
     case OFPACT_SET_IPV4_SRC:
     case OFPACT_SET_L4_DST_PORT:
     case OFPACT_SET_L4_SRC_PORT:
+    case OFPACT_INC_TCP_SEQ:
+    case OFPACT_DEC_TCP_SEQ:
+    case OFPACT_INC_TCP_ACK:
+    case OFPACT_DEC_TCP_ACK:
     case OFPACT_SET_MPLS_LABEL:
     case OFPACT_SET_MPLS_TC:
     case OFPACT_SET_MPLS_TTL:
@@ -8223,6 +8407,10 @@ ovs_instruction_type_from_ofpact_type(enum ofpact_type type,
     case OFPACT_SET_IP_TTL:
     case OFPACT_SET_L4_SRC_PORT:
     case OFPACT_SET_L4_DST_PORT:
+    case OFPACT_INC_TCP_SEQ:
+    case OFPACT_DEC_TCP_SEQ:
+    case OFPACT_INC_TCP_ACK:
+    case OFPACT_DEC_TCP_ACK:
     case OFPACT_REG_MOVE:
     case OFPACT_SET_FIELD:
     case OFPACT_STACK_PUSH:
@@ -9030,6 +9218,10 @@ get_ofpact_map(enum ofp_version version)
         { OFPACT_SET_FIELD, 25 },
         /* OF1.3+ OFPAT_PUSH_PBB (26) not supported. */
         /* OF1.3+ OFPAT_POP_PBB (27) not supported. */
+        { OFPACT_INC_TCP_SEQ, 80 },
+        { OFPACT_DEC_TCP_SEQ, 81 },
+        { OFPACT_INC_TCP_ACK, 82 },
+        { OFPACT_DEC_TCP_ACK, 83 },
         { 0, -1 },
     };
 
@@ -9128,6 +9320,10 @@ ofpact_outputs_to_port(const struct ofpact *ofpact, ofp_port_t port)
     case OFPACT_SET_IP_TTL:
     case OFPACT_SET_L4_SRC_PORT:
     case OFPACT_SET_L4_DST_PORT:
+    case OFPACT_INC_TCP_SEQ:
+    case OFPACT_DEC_TCP_SEQ:
+    case OFPACT_INC_TCP_ACK:
+    case OFPACT_DEC_TCP_ACK:
     case OFPACT_REG_MOVE:
     case OFPACT_SET_FIELD:
     case OFPACT_STACK_PUSH:
