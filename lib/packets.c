@@ -1374,6 +1374,34 @@ packet_set_tcp_port(struct dp_packet *packet, ovs_be16 src, ovs_be16 dst)
     pkt_metadata_init_conn(&packet->md);
 }
 
+void
+packet_inc_tcp_seq(struct dp_packet *packet, uint32_t seq_delta)
+{
+    struct tcp_header *th = dp_packet_l4(packet);
+
+    if (OVS_LIKELY(seq_delta != 0)) {
+        ovs_be32 seq = get_16aligned_be32(&th->tcp_seq);
+        ovs_be32 new_seq = htonl(ntohl(seq) + seq_delta);
+        th->tcp_csum = recalc_csum32(th->tcp_csum, seq, new_seq);
+        put_16aligned_be32(&th->tcp_seq, new_seq);
+    }
+    pkt_metadata_init_conn(&packet->md);
+}
+
+void
+packet_inc_tcp_ack(struct dp_packet *packet, uint32_t ack_delta)
+{
+    struct tcp_header *th = dp_packet_l4(packet);
+
+    if (OVS_LIKELY(ack_delta != 0)) {
+        ovs_be32 ack = get_16aligned_be32(&th->tcp_ack);
+        ovs_be32 new_ack = htonl(ntohl(ack) + ack_delta);
+        th->tcp_csum = recalc_csum32(th->tcp_csum, ack, new_ack);
+        put_16aligned_be32(&th->tcp_ack, new_ack);
+    }
+    pkt_metadata_init_conn(&packet->md);
+}
+
 /* Sets the UDP source and destination port ('src' and 'dst' respectively) of
  * the UDP header contained in 'packet'.  'packet' must be a valid UDP packet
  * with its l4 offset properly populated. */
