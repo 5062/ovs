@@ -2963,6 +2963,26 @@ static int validate_and_copy_check_pkt_len(struct net *net,
 	return 0;
 }
 
+static int validate_inc_tcp_seq(const struct nlattr *a,
+                                const sw_flow_key *key, __be16 eth_type)
+{
+    if ((eth_type != htons(ETH_P_IP) && eth_type != htons(ETH_P_IPV6)) ||
+        key->ip.proto != IPPROTO_TCP) {
+        return -EINVAL;
+    }
+    return 0;
+}
+
+static int validate_inc_tcp_ack(const struct nlattr *a,
+                                const sw_flow_key *key, __be16 eth_type)
+{
+    if ((eth_type != htons(ETH_P_IP) && eth_type != htons(ETH_P_IPV6)) ||
+        key->ip.proto != IPPROTO_TCP) {
+        return -EINVAL;
+    }
+    return 0;
+}
+
 static int copy_action(const struct nlattr *from,
 		       struct sw_flow_actions **sfa, bool log)
 {
@@ -3011,6 +3031,8 @@ static int __ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
 			[OVS_ACTION_ATTR_METER] = sizeof(u32),
 			[OVS_ACTION_ATTR_CLONE] = (u32)-1,
 			[OVS_ACTION_ATTR_CHECK_PKT_LEN] = (u32)-1,
+			[OVS_ACTION_ATTR_INC_TCP_SEQ] = sizeof(u32),
+			[OVS_ACTION_ATTR_INC_TCP_ACK] = sizeof(u32),
 		};
 		const struct ovs_action_push_vlan *vlan;
 		int type = nla_type(a);
@@ -3234,6 +3256,20 @@ static int __ovs_nla_copy_actions(struct net *net, const struct nlattr *attr,
                         if (err)
                                 return err;
                         skip_copy = true;
+                        break;
+                }
+
+                case OVS_ACTION_ATTR_INC_TCP_SEQ: {
+                        err = validate_inc_tcp_seq(a, key, eth_type);
+                        if (err)
+                                return err;
+                        break;
+                }
+
+                case OVS_ACTION_ATTR_INC_TCP_ACK: {
+                        err = validate_inc_tcp_ack(a, key, eth_type);
+                        if (err)
+                                return err;
                         break;
                 }
 

@@ -1256,6 +1256,50 @@ static int execute_check_pkt_len(struct datapath *dp, struct sk_buff *skb,
 			     nla_len(actions), last, clone_flow_key);
 }
 
+static int inc_tcp_seq(struct sk_buff *skb, struct sw_flow_key *key,
+                       uint32_t seq_delta)
+{
+    struct tcphdr *th;
+    err = skb_ensure_writable(skb, skb_transport_offset(skb) +
+                              sizeof(struct tcphdr));
+    if (unlikely(err))
+        return err;
+
+    th = tcp_hdr(skb);
+
+    if (likely(seq_delta != 0)) {
+        __be32 new_seq = htonl(ntohl(th->seq) + seq_delta);
+        inet_proto_csum_replace4(&th->check, skb, th->seq, new_seq, false);
+        th->seq = new_seq;
+    }
+
+    skb_clear_hash(skb);
+
+    return 0;
+}
+
+static int inc_tcp_ack(struct sk_buff *skb, struct sw_flow_key *key,
+                       uint32_t ack_delta)
+{
+    struct tcphdr *th;
+    err = skb_ensure_writable(skb, skb_transport_offset(skb) +
+                              sizeof(struct tcphdr));
+    if (unlikely(err))
+        return err;
+
+    th = tcp_hdr(skb);
+
+    if (likely(ack_delta != 0)) {
+        __be32 new_ack = htonl(ntohl(th->ack_seq) + ack_delta);
+        inet_proto_csum_replace4(&th->check, skb, th->ack_seq, new_ack, false);
+        th->ack_seq = new_ack;
+    }
+
+    skb_clear_hash(skb);
+
+    return 0;
+}
+
 /* Execute a list of actions against 'skb'. */
 static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
 			      struct sw_flow_key *key,
@@ -1424,6 +1468,16 @@ static int do_execute_actions(struct datapath *dp, struct sk_buff *skb,
                         if (last)
                                 return err;
 
+                        break;
+                }
+
+                case OVS_ACTION_ATTR_INC_TCP_SEQ: {
+                        err = inc_tcp_seq(skb, key, nla_get_u32(a));
+                        break;
+                }
+
+                case OVS_ACTION_ATTR_INC_TCP_ACK: {
+                        err = inc_tcp_ack(skb, key, nla_get_u32(a));
                         break;
                 }
 		}
